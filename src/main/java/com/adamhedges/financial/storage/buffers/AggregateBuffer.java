@@ -6,7 +6,9 @@ import com.adamhedges.utilities.logger.Logger;
 import lombok.Getter;
 
 import java.time.Instant;
+import java.util.LinkedList;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.concurrent.Semaphore;
 
 public class AggregateBuffer extends FeedForwardBuffer {
@@ -17,14 +19,10 @@ public class AggregateBuffer extends FeedForwardBuffer {
     private final Logger logger;
 
     private final Semaphore lock = new Semaphore(1);
-    private PriceBar currentBar = null;
+    private final Queue<PriceBar> buffer = new LinkedList<>();
 
-    @Getter
-    private double lastPrice;
     @Getter
     private PriceBar lastBar;
-
-    private int lastCheckMinute = 0;
 
     public AggregateBuffer(String symbol) {
         super();
@@ -38,53 +36,11 @@ public class AggregateBuffer extends FeedForwardBuffer {
         this.logger = logger;
     }
 
-    public void set(double price, Instant timestamp) {
-        lastPrice = price;
-
-        try {
-            lock.acquire();
-            if (currentBar == null) {
-                currentBar = new PriceBar(symbol, price, timestamp);
-                tryLog(String.format("Initialized bar %s [ %s ]", symbol, currentBar));
-            }
-
-            if (price > currentBar.getHigh()) {
-                currentBar.setHigh(price);
-            } else if (price < currentBar.getLow()) {
-                currentBar.setLow(price);
-            }
-
-            currentBar.setClose(price);
-        } catch (Exception ignored) {
-
-        } finally {
-            lock.release();
-        }
-    }
-
     public void set(PriceBar bar) {
-        lastBar = bar;
-
         try {
+            tryLog(String.format("Buffering bar %s [%s ]", symbol, bar));
             lock.acquire();
-            if (currentBar == null) {
-                currentBar = bar;
-            } else {
-                long totalVolume = currentBar.getVolume() + bar.getVolume();
-                double currentBarTotal = currentBar.getVwap() * currentBar.getVolume();
-                double barTotal = bar.getVwap() * bar.getVolume();
-                currentBar.setVolume(totalVolume);
-                currentBar.setVwap((currentBarTotal + barTotal) / totalVolume);
-            }
-
-            if (bar.getHigh() > currentBar.getHigh()) {
-                currentBar.setHigh(bar.getHigh());
-            } else if (bar.getLow() < currentBar.getLow()) {
-                currentBar.setLow(bar.getLow());
-            }
-
-            currentBar.setClose(bar.getClose());
-
+            buffer.add(bar);
         } catch (Exception ignored) {
 
         } finally {
@@ -100,24 +56,19 @@ public class AggregateBuffer extends FeedForwardBuffer {
     @Override
     public Optional<PriceBar> getNext(Instant timestamp) {
         Optional<PriceBar> ret = Optional.empty();
-        int time = DateUtilities.getInstantTime(timestamp, DateUtilities.EASTERN_TIMEZONE);
 
         try {
             lock.acquire();
-
-            if (currentBar != null && time != currentBar.getTime()) {
-                tryLog(String.format("Captured bar %s [ %s ]", symbol, currentBar));
-                prev = currentBar;
-                ret = Optional.of(currentBar);
-                currentBar = null;
-            } else if (time != lastCheckMinute && prev != null) {
-                tryLog(String.format("Replaying bar %s [ %s ]", symbol, prev));
-                ret = Optional.of(prev);
+            PriceBar nextBar = buffer.poll();
+            if (nextBar != null) {
+                tryLog(String.format("Captured bar %s [ %s ]", symbol, nextBar));
+                prev = lastBar;
+                lastBar = nextBar;
+                ret = Optional.of(nextBar);
             }
         } catch (Exception ignored) {
 
         } finally {
-            lastCheckMinute = time;
             lock.release();
         }
 
@@ -131,7 +82,7 @@ public class AggregateBuffer extends FeedForwardBuffer {
 
     @Override
     public int getSize() {
-        return 1;
+        return buffer.size();
     }
 
     @Override
@@ -141,7 +92,7 @@ public class AggregateBuffer extends FeedForwardBuffer {
 
     @Override
     public void clear() {
-        currentBar = null;
+        buffer.clear();
         next = null;
         prev = null;
     }
