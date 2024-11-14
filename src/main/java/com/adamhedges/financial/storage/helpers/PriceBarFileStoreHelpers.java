@@ -31,7 +31,8 @@ public class PriceBarFileStoreHelpers {
         }
 
         List<PriceBar> bars = fileStore.read(symbol, date);
-        return bars.subList(bars.size() - numBars, bars.size());
+        int n = Math.min(numBars, bars.size());
+        return bars.subList(bars.size() - n, bars.size());
 
     }
 
