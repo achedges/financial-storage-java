@@ -38,7 +38,7 @@ public class AggregateBuffer extends FeedForwardBuffer {
 
     public void set(PriceBar bar) {
         try {
-            tryLog(String.format("Buffering bar %s [%s ]", symbol, bar));
+            tryLog(String.format("Buffering bar %s [ %s ]", symbol, bar));
             lock.acquire();
             buffer.add(bar);
         } catch (Exception ignored) {
