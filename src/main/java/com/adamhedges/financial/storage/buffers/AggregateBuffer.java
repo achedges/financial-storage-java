@@ -49,6 +49,11 @@ public class AggregateBuffer extends FeedForwardBuffer {
     }
 
     @Override
+    public Optional<PriceBar> peek() {
+        return lastBar == null ? Optional.empty() : Optional.of(lastBar);
+    }
+
+    @Override
     public Optional<PriceBar> getNext() {
         return getNext(DateUtilities.getZonedNowInstant(DateUtilities.EASTERN_TIMEZONE));
     }

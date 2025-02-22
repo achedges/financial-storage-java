@@ -10,6 +10,7 @@ public abstract class FeedForwardBuffer {
     protected PriceBar next = null;
     protected PriceBar prev = null;
 
+    public abstract Optional<PriceBar> peek();
     public abstract Optional<PriceBar> getNext();
     public abstract Optional<PriceBar> getNext(Instant timestamp);
     public abstract Optional<PriceBar> getPrev();

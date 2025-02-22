@@ -19,6 +19,11 @@ public class StorageBuffer extends FeedForwardBuffer {
     }
 
     @Override
+    public Optional<PriceBar> peek() {
+        return next == null ? Optional.empty() : Optional.of(next);
+    }
+
+    @Override
     public Optional<PriceBar> getNext() {
         return getNext(DateUtilities.getZonedNowInstant(DateUtilities.EASTERN_TIMEZONE));
     }

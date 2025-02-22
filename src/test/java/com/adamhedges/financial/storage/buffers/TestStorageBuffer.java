@@ -66,6 +66,10 @@ public class TestStorageBuffer {
         Assertions.assertTrue(bar.isEmpty());
         Assertions.assertFalse(buffer.getPrev().isEmpty());
         Assertions.assertEquals(931, buffer.getPrev().get().getTime());
+
+        Optional<PriceBar> peekBar = buffer.peek();
+        Assertions.assertTrue(peekBar.isPresent());
+        Assertions.assertEquals(931, peekBar.get().getTime());
     }
 
 }

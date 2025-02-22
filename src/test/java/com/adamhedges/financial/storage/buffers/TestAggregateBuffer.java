@@ -42,6 +42,10 @@ public class TestAggregateBuffer {
 
         Assertions.assertEquals(bar1.getClose(), buffer.getPrev().orElseThrow(() -> new RuntimeException("No previous bar")).getClose());
         Assertions.assertEquals(bar2.getClose(), buffer.getLastBar().getClose());
+
+        Optional<PriceBar> peekBar = buffer.peek();
+        Assertions.assertTrue(peekBar.isPresent());
+        Assertions.assertEquals(930, peekBar.get().getTime());
     }
 
 }
