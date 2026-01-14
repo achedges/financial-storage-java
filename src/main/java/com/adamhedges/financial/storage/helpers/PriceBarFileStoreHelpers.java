@@ -5,6 +5,7 @@ import com.adamhedges.financial.storage.index.IndexNode;
 import com.adamhedges.financial.core.bars.PriceBar;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,14 +24,25 @@ public class PriceBarFileStoreHelpers {
 
         long date = dateNode.get().getDate();
 
-        if (beforeDate != null && beforeDate <= dateNode.get().getDate()) {
+        if (beforeDate != null && beforeDate <= date) {
             Optional<IndexNode> beforeDateNode = fileStore.index.prev(symbol, beforeDate);
             if (beforeDateNode.isPresent()) {
                 date = beforeDateNode.get().getDate();
             }
         }
 
-        List<PriceBar> bars = fileStore.read(symbol, date);
+        List<PriceBar> bars = new ArrayList<>();
+        while (bars.size() < numBars) {
+            bars.addAll(fileStore.read(symbol, date));
+            dateNode = fileStore.index.prev(symbol, date);
+            if (dateNode.isEmpty()) {
+                break;
+            }
+            date = dateNode.get().getDate();
+        }
+
+        bars.sort(Comparator.comparingLong(PriceBar::getId));
+
         int n = Math.min(numBars, bars.size());
         return bars.subList(bars.size() - n, bars.size());
 
