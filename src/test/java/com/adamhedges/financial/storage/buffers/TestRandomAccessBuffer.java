@@ -8,10 +8,17 @@ import java.util.List;
 public class TestRandomAccessBuffer {
 
     @Test
-    public void TestRandomAccessBuffer_init() {
+    public void TestRandomAccessBuffer_init_elements() {
         RandomAccessBuffer<Integer> buffer = new RandomAccessBuffer<>(List.of(0, 1, 2, 3, 4));
         Assertions.assertEquals(5, buffer.getBufferSize());
         Assertions.assertEquals(4, buffer.getCurrentBufferIndex());
+    }
+
+    @Test
+    public void TestRandomAccessBuffer_init_capacity() {
+        RandomAccessBuffer<Integer> buffer = new RandomAccessBuffer<>(5);
+        Assertions.assertEquals(5, buffer.getBufferSize());
+        Assertions.assertEquals(-1, buffer.getCurrentBufferIndex());
     }
 
     @Test
@@ -57,6 +64,13 @@ public class TestRandomAccessBuffer {
             buffer2.add(i);
             Assertions.assertEquals(i, buffer2.getLast().orElse(-1));
         }
+
+        RandomAccessBuffer<Integer> buffer3 = new RandomAccessBuffer<>(3);
+        buffer3.add(1);
+        buffer3.add(2);
+        buffer3.add(3);
+        Assertions.assertEquals(3, buffer3.getBufferSize());
+        Assertions.assertEquals(3, buffer3.getLast().orElse(-1));
     }
 
 }

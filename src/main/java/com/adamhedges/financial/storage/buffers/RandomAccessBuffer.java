@@ -10,10 +10,16 @@ public class RandomAccessBuffer<T> {
     private final int size;
     private int index;
 
-    RandomAccessBuffer(List<T> elements) {
+    public RandomAccessBuffer(List<T> elements) {
         this.elements = new ArrayList<>(elements);
         this.size = elements.size();
         this.index = this.size - 1;
+    }
+
+    public RandomAccessBuffer(int capacity) {
+        this.elements = new ArrayList<>(capacity);
+        this.size = capacity;
+        this.index = -1;
     }
 
     public int getBufferSize() {
@@ -25,7 +31,7 @@ public class RandomAccessBuffer<T> {
     }
 
     public int getPosition(int offset) {
-        if (offset >= size) {
+        if (offset >= size || elements.isEmpty()) {
             return -1;
         } else {
             return (index - offset) % size;
@@ -43,7 +49,11 @@ public class RandomAccessBuffer<T> {
 
     public void add(T element) {
         index++;
-        elements.set(getPosition(0), element);
+        if (elements.size() < size) {
+            elements.add(element);
+        } else {
+            elements.set(getPosition(0), element);
+        }
     }
 
 }
